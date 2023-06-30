@@ -1,0 +1,95 @@
+﻿@page "/registrado-page"
+@inject NavigationManager NavigationManager
+@inject HttpClient httpClient
+@using DoaseApp.Shared.Classes;
+@using Microsoft.AspNetCore.Components.Web
+@using static Microsoft.AspNetCore.WebUtilities.QueryHelpers
+
+<link rel="stylesheet" href="/css/stylesheet.css" />
+
+@if (sucBuscarUsuario == true)
+{
+    <div class="d-flex justify-content-center">
+        <h3>Olá, @User.FirstName!</h3>
+    </div>
+
+    <div>
+        <div class="d-flex flex-start align-items-center justify-content-around">
+            <div class="criar-campanha">
+                <div class="rectangle">
+                    <div class="inner-div">
+                        <button type="button" class="btn btn-primary mx-2" @onclick="@NavigateToCriarCampanha" disabled="@(User.TemCampanha ? true : false)"><strong>Criar Campanha</strong></button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="d-flex justify-content-center">
+                    <div class="criar-campanha">
+                        <div class="rectangle">
+                            <div class="inner-div">
+                                @*ADICIONAR ESTA VALIDACAO DEPOIS*@
+                                <button type="button" class="btn btn-primary mx-2" @onclick="@NavigateToCriarAdministarCampanha"><strong>Administrar Campanha</strong></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="criar-campanha">Bloco3</div>
+        </div>
+    </div>
+}
+
+
+<p>Email: @Email</p>
+
+<button @onclick="NavigateToLoginPage">Go Back to Login Page</button>
+
+@code {
+    [Parameter] public string Email { get; set; }
+    [Parameter] public string Password { get; set; }
+    public Person User { get; set; } = new Person(); // Initialize User object
+    private string username;
+
+    public bool sucBuscarUsuario = false;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var queryParameters = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        Email = queryParameters["email"];
+        Password = queryParameters["password"];
+
+        await GetUserByEmail(Email);
+
+    }
+
+    private void NavigateToLoginPage()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void NavigateToCriarCampanha()
+    {
+        username = User.Email;
+        NavigationManager.NavigateTo($"/criar-campanha?email={username}");
+    }
+
+    private void NavigateToCriarAdministarCampanha()
+    {
+        username = User.Email;
+        NavigationManager.NavigateTo($"/administrar-campanha?email={username}");
+    }
+
+    private async Task GetUserByEmail(string email)
+    {
+        User = await httpClient.GetFromJsonAsync<Person>($"api/person/byEmail?email={email}");
+
+        if (User != null)
+            sucBuscarUsuario = true;
+    }
+}
+

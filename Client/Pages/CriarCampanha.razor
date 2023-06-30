@@ -1,0 +1,265 @@
+﻿@page "/criar-campanha"
+@inject NavigationManager NavigationManager
+@inject HttpClient httpClient
+@inject IItemRepository ItemRepository
+@using DoaseApp.Shared.Classes;
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities;
+@using static Microsoft.AspNetCore.WebUtilities.QueryHelpers
+
+<h3>Criar Campanha</h3>
+
+@if (CadastroCompleto == false)
+{
+    <EditForm Model="@campanha" OnValidSubmit="CreateCampanha">
+        <div class="mb-3">
+            <label for="criador" class="form-label">Criador: </label>
+            <InputText class="form-control" id="criador" placeholder="Criador..." @bind-Value="@campanha.Criador" />
+        </div>
+        <div class="mb-3">
+            <label for="nomeCampanha" class="form-label">Nome da Campanha: </label>
+            <InputText class="form-control" id="nomeCampanha" placeholder="De um nome para a campanha..." @bind-Value="@campanha.NomeCampanha" />
+        </div>
+        <div class="mb-3">
+            <label for="objetivos" class="form-label">Descricao: </label>
+            <InputTextArea class="form-control" id="objetivos" placeholder="Descreva a quem e como essa campanha beneficiara..." @bind-Value="@campanha.Objetivos" />
+        </div>
+
+        <h4>Selecione quais os itens e quantidades arrecadados pela campanha: </h4>
+
+        <div class="row justify-content-center">
+            <div class="col-3">
+                <InputSelect class="form-control" @bind-Value="selectedName1">
+                    <option value="">Selecione um item para arrecadar: </option>
+                    @foreach (var item in Itens)
+                    {
+                        <option value="@item.NomeItem">@item.NomeItem</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-3">
+                <input type="text" class="form-control" placeholder="Quantidade: " aria-label="Last name" @bind="@quantidade1" />
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-3">
+                <InputSelect class="form-control" @bind-Value="selectedName2">
+                    <option value="">Selecione um item para arrecadar: </option>
+                    @foreach (var item in Itens)
+                    {
+                        <option value="@item.NomeItem">@item.NomeItem</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-3">
+                <input type="text" class="form-control" placeholder="Quantidade: " aria-label="Last name" @bind="@quantidade2" />
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-3">
+                <InputSelect class="form-control" @bind-Value="selectedName3">
+                    <option value="">Selecione um item para arrecadar: </option>
+                    @foreach (var item in Itens)
+                    {
+                        <option value="@item.NomeItem">@item.NomeItem</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-3">
+                <input type="text" class="form-control" placeholder="Quantidade: " aria-label="Last name" @bind="@quantidade3" />
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-3">
+                <InputSelect class="form-control" @bind-Value="selectedName4">
+                    <option value="">Selecione um item para arrecadar: </option>
+                    @foreach (var item in Itens)
+                    {
+                        <option value="@item.NomeItem">@item.NomeItem</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-3">
+                <input type="text" class="form-control" placeholder="Quantidade: " aria-label="Last name" @bind="@quantidade4" />
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-3">
+                <InputSelect class="form-control" @bind-Value="selectedName5">
+                    <option value="">Selecione um item para arrecadar: </option>
+                    @foreach (var item in Itens)
+                    {
+                        <option value="@item.NomeItem">@item.NomeItem</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-3">
+                <input type="text" class="form-control" placeholder="Quantidade: " aria-label="Last name" @bind="@quantidade5" />
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Campanha</button>
+    </EditForm>
+
+}
+
+else
+{
+    <div class="d-flex justify-content-center">
+        <div class="card bg-light p-5">
+            <div class="card-body d-flex flex-column align-items-center">
+                <p>Seus dados foram salvos com sucesso!</p>
+                <div class="d-flex justify-content-center mb-8">
+                    <button type="button" class="btn btn-primary mx-2" @onclick="@NavigateToRegistered">Continuar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter] public string Email { get; set; }
+    public Person User { get; set; }
+    public bool CadastroCompleto { get; set; } = false;
+
+    private string selectedName1;
+    private string selectedName2;
+    private string selectedName3;
+    private string selectedName4;
+    private string selectedName5;
+
+    private int quantidade1;
+    private int quantidade2;
+    private int quantidade3;
+    private int quantidade4;
+    private int quantidade5;
+
+    public List<Item> Itens { get; set; } = new List<Item>();
+
+    public Campanha campanha = new Campanha();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var queryParameters = QueryHelpers.ParseQuery(uri.Query);
+        Email = queryParameters["email"];
+
+        await GetUserByEmail(Email);
+        await GetAllItens();
+    }
+
+    private async Task GetUserByEmail(string email)
+    {
+        User = await httpClient.GetFromJsonAsync<Person>($"api/person/byEmail?email={email}");
+    }
+
+    private async Task GetAllItens()
+    {
+        var items = await httpClient.GetFromJsonAsync<IEnumerable<Item>>("api/item/all");
+        Itens = items?.ToList();
+    }
+
+    private async Task CreateCampanha()
+    {
+        campanha.Usuario = User.Email;
+        campanha.DoacoesRequisitadas = new List<DoacoesRequisitadas>();
+
+        if (!string.IsNullOrEmpty(selectedName1))
+        {
+            var item1 = new Item { NomeItem = selectedName1 };
+            var doacao1 = new DoacoesRequisitadas
+                {
+                    Item = item1,
+                    QuantidadePedida = quantidade1
+                };
+            campanha.DoacoesRequisitadas.Add(doacao1);
+        }
+
+        if (!string.IsNullOrEmpty(selectedName2))
+        {
+            var item2 = new Item { NomeItem = selectedName2 };
+            var doacao2 = new DoacoesRequisitadas
+                {
+                    Item = item2,
+                    QuantidadePedida = quantidade2
+                };
+            campanha.DoacoesRequisitadas.Add(doacao2);
+        }
+
+        if (!string.IsNullOrEmpty(selectedName3))
+        {
+            var item3 = new Item { NomeItem = selectedName3 };
+            var doacao3 = new DoacoesRequisitadas
+                {
+                    Item = item3,
+                    QuantidadePedida = quantidade3
+                };
+            campanha.DoacoesRequisitadas.Add(doacao3);
+        }
+
+        if (!string.IsNullOrEmpty(selectedName4))
+        {
+            var item4 = new Item { NomeItem = selectedName4 };
+            var doacao4 = new DoacoesRequisitadas
+                {
+                    Item = item4,
+                    QuantidadePedida = quantidade4
+                };
+            campanha.DoacoesRequisitadas.Add(doacao4);
+        }
+
+        if (!string.IsNullOrEmpty(selectedName5))
+        {
+            var item5 = new Item { NomeItem = selectedName5 };
+            var doacao5 = new DoacoesRequisitadas
+                {
+                    Item = item5,
+                    QuantidadePedida = quantidade5
+                };
+            campanha.DoacoesRequisitadas.Add(doacao5);
+        }
+
+        try
+        {
+            var response = await httpClient.PostAsJsonAsync("api/campanha", campanha);
+
+            if (response.IsSuccessStatusCode)
+            {
+                ShowSuccessMessage();
+            }
+
+            var updatedPersonResponse = await httpClient.PutAsJsonAsync("api/person/update", User);
+
+        }
+
+        catch
+        {
+
+        }
+    }
+
+    private void ShowSuccessMessage()
+    {
+        CadastroCompleto = true;
+    }
+
+    private void ResetForm()
+    {
+        CadastroCompleto = false;
+    }
+
+    private void NavigateToRegistered()
+    {
+        string username = User.Email;
+        string password = User.Senha;
+
+        NavigationManager.NavigateTo($"/registrado-page?email={username}&password={password}");
+    }
+
+}
+

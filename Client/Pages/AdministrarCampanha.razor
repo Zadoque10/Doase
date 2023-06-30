@@ -1,0 +1,86 @@
+﻿@page "/administrar-campanha"
+@inject NavigationManager NavigationManager
+@inject HttpClient httpClient
+@using DoaseApp.Shared.Classes;
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities;
+@using static Microsoft.AspNetCore.WebUtilities.QueryHelpers
+
+<link rel="stylesheet" href="/css/stylesheet.css" />
+
+<h3 class="d-flex justify-content-center">Administrar Campanha</h3>
+
+<div class="container" style="background-color: white;">
+    <div class="row">
+        <div class="col-md-6 border">
+            <p>Item</p>
+        </div>
+        <div class="col-md-6 border">
+            <p>Quantidade</p>
+        </div>
+    </div>
+
+    
+    @if (Campanha != null && Campanha.DoacoesRequisitadas != null)
+    {
+        @foreach (var doacao in Campanha.DoacoesRequisitadas)
+        {
+            <div class="row">
+                <div class="col-md-6 border">
+                    <p>@doacao.Item?.NomeItem</p>
+                </div>
+                <div class="col-md-6 border">
+                    <div class="progress">
+                        @if (doacao.QuantidadePedida > 0)
+                        {
+                            var percentage = (doacao.QuantidadeArrecadada * 100) / doacao.QuantidadePedida;
+                            <div class="progress-bar" role="progressbar" style="width: @percentage.ToString("0")%">
+                                <span class="progress-bar-text">@percentage.ToString("0")%</span>
+                            </div>
+                            <span class="sr-only">@percentage.ToString("0")%</span>
+                        }
+                        else
+                        {
+                            <div class="progress-bar" role="progressbar" style="width: 0%">
+                                <span class="progress-bar-text">0%</span>
+                            </div>
+                            <span class="sr-only">0%</span>
+                        }
+                    </div>
+                    <div class="text-center">
+                        <p>@doacao.QuantidadeArrecadada / @doacao.QuantidadePedida</p>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+
+
+</div>
+
+
+<p>@Campanha.NomeCampanha</p>
+
+@code {
+
+    [Parameter] public string Email { get; set; }
+
+    public Person User { get; set; } = new Person(); // Initialize User object
+    public Campanha Campanha { get; set; } = new Campanha();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var queryParameters = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        Email = queryParameters["email"];
+
+        await CampanhaByUser(Email);
+
+    }
+
+    private async Task CampanhaByUser(string email)
+    {
+        Campanha = await httpClient.GetFromJsonAsync<Campanha>($"api/campanha/CampanhaByUser?email={email}");
+    }
+}
+
